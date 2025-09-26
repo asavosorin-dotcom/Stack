@@ -5,33 +5,45 @@
 #include <stdlib.h>
 #include <assert.h>
 
-// #define VERIFY(FILE, Stack_t*, __LINE__) (StackVerify(fileerr, stk, line))
-
-enum StackErr_t {STACK_OK = 0, ERR_SIZE = 1, ERR_ELEM = 2, ERR_STACK_ADRESS = 4, ERR_DATA_ADRESS = 8, ERR_KANAREYKA = 16};
-
+#include "colors.h"
 
 typedef int StackElement_t;
+enum StackErr_t {STACK_OK = 0, ERR_SIZE = 1, ERR_ELEM = 2, ERR_STACK_ADRESS = 4, ERR_DATA_ADRESS = 8, ERR_KANAREYKALEFT = 16, ERR_KANAREYKARIGHT = 32, ERR_CAPASITY = 64, ERR_CANARY_STRUCT = 128};
+    
+typedef struct {
+    int line;
+    const char* filename; 
+} Passport_t;
+    
+typedef struct {
+    StackElement_t canary;
+    StackElement_t* data;
+    size_t size;
+    int capasity; 
+    //
+    Passport_t passport;
+    //
+} Stack_t;
+
+int StackCtor(FILE* fileerr, Stack_t* stk, int capasity, int line, const char* funcname);
+int StackPush(FILE* fileerr, Stack_t* stk, StackElement_t elem, int line);
+int StackPop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line);
+int StackDtor(FILE* fileerr, Stack_t* stk, int line);
+int StackDump(FILE* fileerr, Stack_t* stk, int err);
+int StackTop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line);
+int StackVerify(FILE* fileerr, Stack_t* stk, int line, const char* funcname);
+int StackRealloc(FILE* fileerr, Stack_t* stk, int line);
+ 
+#define STACKVERIFY(stk) StackVerify(fileerr, stk, line, __func__);
+
+#define INITSTACK(stk, capasity) StackCtor(fileerr, &stk, capasity, __LINE__, #stk);
+
+#define PUSH(stk, elem) StackPush(fileerr, &stk, elem, __LINE__);
+#define POP(stk, val) StackPop(fileerr, &stk, &val, __LINE__);
+#define TOP(stk, val) StackTop(fileerr, &stk, &val, __LINE__);
 
 const StackElement_t POISON = 0xDEDDEAD;
 const StackElement_t KANAREYKA = 0xDEAD;
 
-typedef struct {
-    int line;
-    char* filename; 
-} Passport_t;
-
-typedef struct {
-    StackElement_t* data;
-    size_t size;
-    size_t capasity;
-    // Passport_t passport;
-} Stack_t;
-
-StackErr_t StackCtor(FILE* fileerr, Stack_t* stk, size_t capasity);
-StackErr_t StackPush(FILE* fileerr, Stack_t* stk, StackElement_t elem);
-StackErr_t StackPop(FILE* fileerr, Stack_t* stk, StackElement_t* elem);
-StackErr_t StackDtor(FILE* fileerr, Stack_t* stk);
-StackErr_t StackDump(FILE* fileerr, Stack_t* stk, StackErr_t err);
-StackErr_t StackVerify(FILE* fileerr, Stack_t* stk);
 
 #endif 

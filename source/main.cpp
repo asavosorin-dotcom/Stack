@@ -6,24 +6,45 @@
 int main() {
     
     FILE* fileerr = fopen("fileerr.log", "w");
-    
     Stack_t stk1 = {};
-    StackCtor(fileerr, &stk1, 5);
+    
+    do {
+        int err = INITSTACK(stk1, 9);
+        if (err) {
+            // printf("fmasd;jgoiadshg;adsng;ldsang'padsng;nS;G\n");
+            break;
+        }
 
-    StackPush(fileerr, &stk1, 10);
-    StackPush(fileerr, &stk1, 20);
-    StackPush(fileerr, &stk1, 3000);
+        // memset(&stk1 + sizeof(stk1) / 2, -1, sizeof(stk1) / 2);
+        // printf("canary: %d\n", stk1.data[0]);
 
-    StackElement_t val = 0;
-    StackPop(fileerr, &stk1, &val);
-    StackPop(fileerr, &stk1, &val);
-    StackPop(fileerr, &stk1, &val);
-    StackPop(fileerr, &stk1, &val);
+        PUSH(stk1, 10);
+        PUSH(stk1, 20);
+        PUSH(stk1, 30);
+        PUSH(stk1, 100);
 
-    printf("%d\n", val);
+        stk1.data[1] = 25;
 
-    StackDump(fileerr, &stk1, STACK_OK);
+        StackElement_t val = 0;
+    
+        POP(stk1, val);
+        printf("%d\n", val);
 
-    StackDtor(fileerr, &stk1);
+        POP(stk1, val);
+        printf("%d\n", val);
+
+        // TOP(stk1, val);
+        // printf("%d\n", val);
+
+        // POP(stk1, val);
+        // printf("%d\n", val);
+
+        // printf("%d\n", val);
+
+        // StackDump(fileerr, &stk1, 0);
+
+        StackDtor(fileerr, &stk1, __LINE__);
+    } while (0);
+    
     fclose(fileerr);
 }
