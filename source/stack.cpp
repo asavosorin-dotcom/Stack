@@ -36,24 +36,33 @@ int StackCtor(FILE* fileerr, Stack_t* stk, int capasity, int line, const char* f
 
     stk->data[capasity + 1] = KANAREYKA;
 
+    #ifdef DEBUG
     int err = STACKVERIFY(stk);
     return err;
+    #endif
+
+    return 0;
 }
 // ver
 int StackPush(FILE* fileerr, Stack_t* stk, StackElement_t elem, int line) {
     assert(stk);
     int err = 0;
-    err = STACKVERIFY(stk);
-    
-    if (err)
-        return err;
 
+    #ifdef DEBUG
+    err = STACKVERIFY(stk);
+
+    if (err) 
+        return err;
+    #endif
+    
     // static int i = 0;
 
     stk->data[stk->size++] = elem;
     // fprintf(fileerr, "%d", i++);
 
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
+    #endif
     return err;
 }
 
@@ -62,10 +71,9 @@ int StackPop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line) {
     assert(elem);
 
     int err = 0;
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
-    
-    if (err)
-        return err;
+    #endif
 
     if (stk->size == 1) {
         // printf("Empty stack\n");
@@ -76,14 +84,19 @@ int StackPop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line) {
     *elem = stk->data[--(stk->size)];
     stk->data[stk->size] = POISON;
 
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
+    #endif
+
     return err;
 }
 
 int StackTop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line) {
     
     int err = 0;
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
+    #endif
     
     if (err)
         return err;
@@ -96,23 +109,30 @@ int StackTop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line) {
     
     *elem = stk->data[stk->size - 1];
 
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
+
+    #endif
+
     return err;
 }
 
 int StackDtor(FILE* fileerr, Stack_t* stk, int line) {
     
     int err = 0;
+
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
-    if (err)
+
+    if (err) 
         return err;
+    #endif
 
     assert(stk);
     stk->size = 0;
     stk->capasity = 0;
     stk->passport = {0};
     free(stk->data);
-    printf("FREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE\n");
     stk->data = NULL;
 
     return err;
@@ -124,30 +144,47 @@ int StackDtor(FILE* fileerr, Stack_t* stk, int line) {
 
 int StackRealloc(FILE* fileerr, Stack_t* stk, int line) {
     int err = 0;
+
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
-    
-    if (err)
+
+    if (err) 
         return err;
-    
+    #endif
+
     StackElement_t* stkreal = (StackElement_t* ) realloc(stk->data, sizeof(StackElement_t) * (size_t) stk->capasity * 2 + 2);
 
     if ((size_t) stkreal != (size_t) stk->data) {
         stk->data = stkreal;
     }
     
-    stk->data[stk->capasity + 1] = POISON; // ЦИКЛ
+    for (int i = stk->capasity + 1; i < stk->capasity * 2 + 1; i++) {
+        stk->data[i] = POISON;
+    }
+
     stk->capasity = stk->capasity * 2;
     stk->data[stk->capasity + 1] = KANAREYKA;
 
+    #ifdef DEBUG
     err = STACKVERIFY(stk);
-    return err;
+
+    if (err) 
+        return err;
+    #endif
+    return 0;
 }
 
 int StackDump(FILE* fileerr, Stack_t* stk, int err) {
     assert(fileerr);
     assert(stk);
+
+    if (!err) {
+        fprintf(fileerr, "Stack OK\n");
+        return 0;
+    }
+
     // 1 & 2;
-    (err & ERR_CANARY_STRUCT) ? fprintf(fileerr, "Destroyd stack") : fprintf(fileerr, "Struct doesn't destroyd") ;
+    (err & ERR_CANARY_STRUCT) ? fprintf(fileerr, "Destroyd stack\n") : fprintf(fileerr, "Struct doesn't destroyd\n") ;
     
     fprintf(fileerr, "stack[%p] %s was made in line %d {", stk, stk->passport.filename, stk->passport.line);
     (err & ERR_STACK_ADRESS) ? fprintf(fileerr, "BAAAAAAAAAAAAAAAAAAAAAAAAAAD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n") : fprintf(fileerr, "\n");
@@ -165,23 +202,23 @@ int StackDump(FILE* fileerr, Stack_t* stk, int err) {
 
     fprintf(fileerr, "{\n");
 
-    fprintf(fileerr, "![0] = %d (KANAREYKA) ", stk->data[0]);
+    fprintf(fileerr, "![0] = " TYPEELEM " (KANAREYKA) ", stk->data[0]);
     (err & ERR_KANAREYKALEFT) ? fprintf(fileerr, "BAAAAAAAAAAAAAAAAAAAAAAAAAAD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n") : fprintf(fileerr, "\n");
     
     for (int i = 1; i < stk->capasity + 1; i++) {
         if (stk->data[i] == POISON)
-            fprintf(fileerr, "[%d] = %d (POISON)\n", i, stk->data[i]);
+            fprintf(fileerr, "[%d] = " TYPEELEM " (POISON)\n", i, stk->data[i]);
         else 
-            fprintf(fileerr, "*[%d] = %d\n", i, stk->data[i]);
+            fprintf(fileerr, "*[%d] = " TYPEELEM "\n", i, stk->data[i]);
 
     }
 
-    fprintf(fileerr, "![%d] = %d (KANAREYKA) ", stk->capasity + 1,  stk->data[stk->capasity + 1]);
+    fprintf(fileerr, "![%d] = " TYPEELEM " (KANAREYKA) ", stk->capasity + 1,  stk->data[stk->capasity + 1]);
     (err & ERR_KANAREYKARIGHT) ? fprintf(fileerr, "BAAAAAAAAAAAAAAAAAAAAAAAAAAD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n") : fprintf(fileerr, "\n");
 
     fprintf(fileerr, "}\n}\n\n");
 
-    return STACK_OK;
+    return err;
 }
 
 //0b00
@@ -189,7 +226,7 @@ int StackDump(FILE* fileerr, Stack_t* stk, int err) {
 //0b01
 //0b01
 
-
+#ifdef DEBUG
 
 int StackVerify(FILE* fileerr, Stack_t* stk, int line, const char* funcname) {
     int err = 0;
@@ -233,5 +270,7 @@ int StackVerify(FILE* fileerr, Stack_t* stk, int line, const char* funcname) {
     
     return err;
 }
+
+#endif
 
 //PUSH, OUT - pechat', ADD, SUB, MUL, DIV, SQRT, HLT - закончить

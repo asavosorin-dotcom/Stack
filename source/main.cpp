@@ -23,15 +23,15 @@ int main() {
         PUSH(stk1, 30);
         PUSH(stk1, 100);
 
-        stk1.data[1] = 25;
+        // stk1.data[1] = 25;
 
         StackElement_t val = 0;
     
         POP(stk1, val);
-        printf("%d\n", val);
+        PRINTELEM(val);
 
         POP(stk1, val);
-        printf("%d\n", val);
+        PRINTELEM(val);
 
         // TOP(stk1, val);
         // printf("%d\n", val);
@@ -43,7 +43,7 @@ int main() {
 
         // StackDump(fileerr, &stk1, 0);
 
-        StackDtor(fileerr, &stk1, __LINE__);
+        DTOR(stk1);
     } while (0);
     
     fclose(fileerr);
