@@ -7,9 +7,12 @@
 // 
 
 int StackCtor(FILE* fileerr, Stack_t* stk, int capasity, int line, const char* filename) {
-    stk->canary = KANAREYKA;
+    stk->canary_left = KANAREYKA;
+    stk->canary_right = KANAREYKA;
+
     stk->passport.line = line;
     stk->passport.filename = filename;
+
     stk->size = 1;
     if (capasity <= 0) {
         fprintf(fileerr, "Called from func: %s line: %d ERROR: capasity less than 0\n", __func__, line);
@@ -36,8 +39,14 @@ int StackCtor(FILE* fileerr, Stack_t* stk, int capasity, int line, const char* f
 
     stk->data[capasity + 1] = KANAREYKA;
 
+    stk->hash = (StackElement_t) stk->size + (StackElement_t) stk->capasity;
+
     #ifdef DEBUG
     int err = STACKVERIFY(stk);
+
+    if (!err)
+        fprintf(fileerr, "INIT OK\n");
+
     return err;
     #endif
 
@@ -56,12 +65,20 @@ int StackPush(FILE* fileerr, Stack_t* stk, StackElement_t elem, int line) {
     #endif
     
     // static int i = 0;
+    stk->hash += (StackElement_t) stk->size * elem;
+    stk->hash += 1; // size += 1
+
+    // fprintf(fileerr, "delta hash = " TYPEELEM "\n", (StackElement_t) stk->size * elem);
 
     stk->data[stk->size++] = elem;
     // fprintf(fileerr, "%d", i++);
 
     #ifdef DEBUG
     err = STACKVERIFY(stk);
+
+    if (!err)
+        fprintf(fileerr, "PUSH OK\n");
+
     #endif
     return err;
 }
@@ -77,15 +94,22 @@ int StackPop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line) {
 
     if (stk->size == 1) {
         // printf("Empty stack\n");
-        *elem = POISON;
+        *elem = 0;
         return STACK_OK;
     }
 
     *elem = stk->data[--(stk->size)];
+    stk->hash -= (StackElement_t) stk->size * *elem;
+    stk->hash -= 1; // size += 1
+
     stk->data[stk->size] = POISON;
 
     #ifdef DEBUG
     err = STACKVERIFY(stk);
+
+    if (!err)
+        fprintf(fileerr, "POP OK\n");
+
     #endif
 
     return err;
@@ -112,6 +136,9 @@ int StackTop(FILE* fileerr, Stack_t* stk, StackElement_t* elem, int line) {
     #ifdef DEBUG
     err = STACKVERIFY(stk);
 
+    if (!err)
+        fprintf(fileerr, "TOP OK\n");
+
     #endif
 
     return err;
@@ -124,7 +151,7 @@ int StackDtor(FILE* fileerr, Stack_t* stk, int line) {
     #ifdef DEBUG
     err = STACKVERIFY(stk);
 
-    if (err) 
+    if (err == ERR_DATA_ADRESS) 
         return err;
     #endif
 
@@ -133,6 +160,7 @@ int StackDtor(FILE* fileerr, Stack_t* stk, int line) {
     stk->capasity = 0;
     stk->passport = {0};
     free(stk->data);
+    // printf("FREEEE!\n");
     stk->data = NULL;
 
     return err;
@@ -152,13 +180,16 @@ int StackRealloc(FILE* fileerr, Stack_t* stk, int line) {
         return err;
     #endif
 
-    StackElement_t* stkreal = (StackElement_t* ) realloc(stk->data, sizeof(StackElement_t) * (size_t) stk->capasity * 2 + 2);
+    StackElement_t* stkreal = (StackElement_t* ) realloc(stk->data, (2 * (size_t) stk->capasity + 2) * sizeof(stk->data[0]));
+    fprintf(fileerr, "12322314\n");
 
-    if ((size_t) stkreal != (size_t) stk->data) {
+    if (stkreal != stk->data && stkreal != NULL) {
         stk->data = stkreal;
     }
     
     for (int i = stk->capasity + 1; i < stk->capasity * 2 + 1; i++) {
+        fprintf(fileerr, "i = %d\n", i);
+
         stk->data[i] = POISON;
     }
 
@@ -170,6 +201,9 @@ int StackRealloc(FILE* fileerr, Stack_t* stk, int line) {
 
     if (err) 
         return err;
+    else 
+        fprintf(fileerr, "REALLOC OK\n");
+
     #endif
     return 0;
 }
@@ -179,12 +213,14 @@ int StackDump(FILE* fileerr, Stack_t* stk, int err) {
     assert(stk);
 
     if (!err) {
-        fprintf(fileerr, "Stack OK\n");
         return 0;
     }
 
+    
     // 1 & 2;
     (err & ERR_CANARY_STRUCT) ? fprintf(fileerr, "Destroyd stack\n") : fprintf(fileerr, "Struct doesn't destroyd\n") ;
+
+    (err & ERR_HASH) ? fprintf(fileerr, "ERROR HASH") : fprintf(fileerr, "HASH OK");
     
     fprintf(fileerr, "stack[%p] %s was made in line %d {", stk, stk->passport.filename, stk->passport.line);
     (err & ERR_STACK_ADRESS) ? fprintf(fileerr, "BAAAAAAAAAAAAAAAAAAAAAAAAAAD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n") : fprintf(fileerr, "\n");
@@ -231,10 +267,15 @@ int StackDump(FILE* fileerr, Stack_t* stk, int err) {
 int StackVerify(FILE* fileerr, Stack_t* stk, int line, const char* funcname) {
     int err = 0;
 
-    if (stk->canary != KANAREYKA) {
-        fprintf(fileerr, "Called from func: %s line: %d ERROR: change all struct \n", funcname, line);
+    if (stk->canary_left != KANAREYKA || stk->canary_right != KANAREYKA) {
+        fprintf(fileerr, "Called from func: %s line: %d ERROR: change struct \n", funcname, line);
         return ERR_CANARY_STRUCT;
+    }
 
+    if (stk->hash != StackHash(stk)) {
+        fprintf(fileerr, "Called from func: %s line: %d ERROR: change struct \n", funcname, line);
+        err |= ERR_HASH;
+        // return ERR_HASH;
     }
 
     if (stk == NULL) {
@@ -272,5 +313,37 @@ int StackVerify(FILE* fileerr, Stack_t* stk, int line, const char* funcname) {
 }
 
 #endif
+
+StackElement_t StackHash(Stack_t* stk) {
+    StackElement_t hash1 = 0;
+    hash1 += (StackElement_t) stk->capasity;
+    hash1 += (StackElement_t) stk->size;
+
+    for (size_t i = 1; i < stk->size; i++) {
+        hash1 += stk->data[i] * (StackElement_t) i;
+    } 
+
+    for (int i = (int) stk->size; i < stk->capasity + 1; i++) {
+        hash1 += (stk->data[i] == POISON) ? 0: stk->data[i];
+    }
+
+    return hash1;
+}
+
+int StackPrint(FILE* fileerr, Stack_t* stk, int line) {
+    int err = 0;
+    
+    #ifdef DEBUG
+    err = STACKVERIFY(stk);
+    #endif
+
+    for (size_t i = 1; i < stk->size; i++) {
+        printf(TYPEELEM " ", stk->data[i]);
+    }
+
+    printf("\n");
+
+    return err;
+}
 
 //PUSH, OUT - pechat', ADD, SUB, MUL, DIV, SQRT, HLT - закончить

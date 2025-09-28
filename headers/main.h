@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "stack.h"
+#include "calculator.h"
 
 #endif

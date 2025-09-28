@@ -2,46 +2,52 @@
 
 // #define EMPTY_ELEM 
 
-
 int main() {
     
-    FILE* fileerr = fopen("fileerr.log", "w");
     Stack_t stk1 = {};
-    
+    FILE* fileerr = fopen("fileerr.log", "w");
+
     do {
-        int err = INITSTACK(stk1, 9);
-        if (err) {
+        int err = INITSTACK(stk1, 9); // init for debug
+
+        // int err = INITSTACK(stk1, 2); // BAD PUSH
+
+        printf("err = %d\n", err);
+        if (err == ERR_CAPASITY || err == ERR_DATA_ADRESS) {
             // printf("fmasd;jgoiadshg;adsng;ldsang'padsng;nS;G\n");
             break;
         }
-
+        //---------------------------------------------------------------------------------------------------------------------------------------------------
         // memset(&stk1 + sizeof(stk1) / 2, -1, sizeof(stk1) / 2);
-        // printf("canary: %d\n", stk1.data[0]);
+        // printf("canary: %d\n", stk1.data[0]);    
 
-        PUSH(stk1, 10);
-        PUSH(stk1, 20);
-        PUSH(stk1, 30);
-        PUSH(stk1, 100);
+        // for (int i = 0; i < 5; i++) { // Verify PUSH
+        //     PUSH(stk1, 10);
+        // }
+        //---------------------------------------------------------------------------------------------------------------------------------------------------
+        
+        CALCULATE(stk1);
 
         // stk1.data[1] = 25;
 
         StackElement_t val = 0;
-    
-        POP(stk1, val);
-        PRINTELEM(val);
+        //---------------------------------------------------------------------------------------------------------------------------------------------------
+        // for (int i = 0; i < 10; i++) { // Verify POP
+        //     POP(stk1, val);
+        // }
+
+        // REALLOC(stk1);
+        // printf("%d", stk1->capasity);   
+        //---------------------------------------------------------------------------------------------------------------------------------------------------
+
 
         POP(stk1, val);
         PRINTELEM(val);
 
-        // TOP(stk1, val);
-        // printf("%d\n", val);
+        POP(stk1, val);
+        PRINTELEM(val);
 
-        // POP(stk1, val);
-        // printf("%d\n", val);
-
-        // printf("%d\n", val);
-
-        // StackDump(fileerr, &stk1, 0);
+        StackDump(fileerr, &stk1, 1024);
 
         DTOR(stk1);
     } while (0);
