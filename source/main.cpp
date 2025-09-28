@@ -12,13 +12,14 @@ int main() {
 
         // int err = INITSTACK(stk1, 2); // BAD PUSH
 
-        printf("err = %d\n", err);
+        // printf("err = %d\n", err);
         if (err == ERR_CAPASITY || err == ERR_DATA_ADRESS) {
             // printf("fmasd;jgoiadshg;adsng;ldsang'padsng;nS;G\n");
             break;
         }
+
         //---------------------------------------------------------------------------------------------------------------------------------------------------
-        // memset(&stk1 + sizeof(stk1) / 2, -1, sizeof(stk1) / 2);
+        // memset(&stk1, -1, sizeof(stk1));
         // printf("canary: %d\n", stk1.data[0]);    
 
         // for (int i = 0; i < 5; i++) { // Verify PUSH
@@ -31,6 +32,7 @@ int main() {
         // stk1.data[1] = 25;
 
         StackElement_t val = 0;
+
         //---------------------------------------------------------------------------------------------------------------------------------------------------
         // for (int i = 0; i < 10; i++) { // Verify POP
         //     POP(stk1, val);

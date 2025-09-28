@@ -272,11 +272,15 @@ int StackVerify(FILE* fileerr, Stack_t* stk, int line, const char* funcname) {
         return ERR_CANARY_STRUCT;
     }
 
+    #ifdef HASH
+
     if (stk->hash != StackHash(stk)) {
         fprintf(fileerr, "Called from func: %s line: %d ERROR: change struct \n", funcname, line);
         err |= ERR_HASH;
         // return ERR_HASH;
     }
+
+    #endif
 
     if (stk == NULL) {
         fprintf(fileerr, "Called from func: %s line: %d ERROR: pointer stk is NULL\n", funcname, line);
@@ -314,6 +318,8 @@ int StackVerify(FILE* fileerr, Stack_t* stk, int line, const char* funcname) {
 
 #endif
 
+#ifdef HASH
+
 StackElement_t StackHash(Stack_t* stk) {
     StackElement_t hash1 = 0;
     hash1 += (StackElement_t) stk->capasity;
@@ -329,6 +335,8 @@ StackElement_t StackHash(Stack_t* stk) {
 
     return hash1;
 }
+
+#endif
 
 int StackPrint(FILE* fileerr, Stack_t* stk, int line) {
     int err = 0;

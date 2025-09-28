@@ -8,6 +8,7 @@
 #include "colors.h"
 
 #define DEBUG
+#define HASH
 
 typedef int StackElement_t;
 #define TYPEELEM "%d"
