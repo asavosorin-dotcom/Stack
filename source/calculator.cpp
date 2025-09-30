@@ -71,8 +71,8 @@ void Calculate(FILE* fileerr, Stack_t* stk1) {
             }
 
             else if (strcmp("OUT", command) == 0) {
-                POP(*stk1, elem);
-                PRINTELEM(elem);
+                int err = POP(*stk1, elem);
+                (err != 0) ? printf("Empty Stack\n") : PRINTELEM(elem)
             }
 
             else if (strcmp("ADD", command) == 0) {
